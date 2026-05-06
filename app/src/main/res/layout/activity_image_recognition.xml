@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#f5f9f9">
+
+    <!-- 标题栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@drawable/header_gradient"
+        android:elevation="8dp">
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="12dp"
+            android:padding="10dp"
+            android:src="@mipmap/jian"
+            android:background="@drawable/button_ripple"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/recognition_title"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:textColor="#fff"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="15dp">
+
+            <!-- 图片选择区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="20dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/upload_photo"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/upload_hint_text"
+                    android:textSize="13sp"
+                    android:textColor="#999"
+                    android:layout_marginTop="5dp"/>
+
+                <!-- 图片预览区域 -->
+                <LinearLayout
+                    android:id="@+id/layout_image_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:layout_marginTop="15dp"
+                    android:background="#f5f9f9"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/iv_plant_photo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerInside"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:id="@+id/layout_upload_hint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:src="@mipmap/ic_launcher"
+                            android:alpha="0.3"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/click_upload"
+                            android:textSize="15sp"
+                            android:textColor="#999"
+                            android:layout_marginTop="10dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 操作按钮 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="15dp">
+
+                    <Button
+                        android:id="@+id/btn_select_photo"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:text="@string/select_photo"
+                        android:textSize="15sp"
+                        android:textColor="#fff"
+                        android:background="@drawable/lin_shape"
+                        android:layout_marginRight="5dp"/>
+
+                    <Button
+                        android:id="@+id/btn_take_photo"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:text="@string/take_photo"
+                        android:textSize="15sp"
+                        android:textColor="#fff"
+                        android:background="@drawable/lin_shape"
+                        android:layout_marginLeft="5dp"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_analyze_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:text="@string/start_recognition"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="#fff"
+                    android:background="@drawable/lin_shape"
+                    android:layout_marginTop="10dp"
+                    android:enabled="false"/>
+            </LinearLayout>
+
+            <!-- 加载中提示 -->
+            <LinearLayout
+                android:id="@+id/layout_loading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="30dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="15dp"
+                android:elevation="4dp">
+
+                <ProgressBar
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:indeterminateTint="#38c47f"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI Analyzing..."
+                    android:textSize="15sp"
+                    android:textColor="#666"
+                    android:layout_marginTop="15dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Identifying disease features..."
+                    android:textSize="13sp"
+                    android:textColor="#999"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
+
+            <!-- 识别结果报告 -->
+            <LinearLayout
+                android:id="@+id/layout_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="15dp"
+                android:visibility="gone"
+                android:layout_marginBottom="15dp"
+                android:elevation="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Analysis Report"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <!-- 识别结果 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp"
+                    android:padding="15dp"
+                    android:background="#f5f9f9">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Diagnosis Result"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/tv_disease_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Root Rot &amp; Spider Mites"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#38c47f"
+                        android:layout_marginTop="8dp"/>
+
+                    <TextView
+                        android:id="@+id/tv_confidence"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/confidence"
+                        android:textSize="14sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+                <!-- 病害特征 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Disease Symptoms"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/tv_disease_features"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="• Brown lesions on roots\n• Soft and mushy roots\n• Wilting plants\n• Yellow spots on leaves\n• Fine webbing on leaves"
+                        android:textSize="13sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="5dp"/>
+                </LinearLayout>
+
+                <!-- 发病原因 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Contributing Factors"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/tv_cause"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="• High soil moisture\n• Poor drainage\n• Hot and dry conditions\n• Excessive nitrogen"
+                        android:textSize="13sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="5dp"/>
+                </LinearLayout>
+
+                <!-- 防治建议 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Treatment Recommendations"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/tv_suggestions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="[Cultural Control]\n• Improve drainage\n• Reduce watering\n\n[Chemical Control]\n• Apply fungicide\n• Spray acaricide\n\n[Biological Control]\n• Release predatory mites"
+                        android:textSize="13sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="5dp"/>
+                </LinearLayout>
+
+                <!-- 预防措施 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp"
+                    android:padding="15dp"
+                    android:background="#fff9e6">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚠️ Prevention Tips"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#ff9800"/>
+
+                    <TextView
+                        android:id="@+id/tv_prevention"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="• Monitor soil moisture (60-70%)\n• Ensure proper drainage\n• Maintain humidity 65-75%\n• Regular inspection\n• Quarantine infected plants"
+                        android:textSize="13sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="5dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 使用提示 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="15dp"
+                android:elevation="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💡 Usage Tips"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• Take clear photos of affected areas\n• Include both leaf front and back surfaces\n• Ensure adequate lighting, avoid overexposure\n• Multiple photos improve accuracy\n• Results are for reference only"
+                    android:textSize="12sp"
+                    android:textColor="#666"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="5dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

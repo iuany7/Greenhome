@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智慧大棚 - 数据看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f9f9;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* ===== 标题栏 ===== */
+        .header {
+            background: linear-gradient(135deg, #38c47f, #2d9f68);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(56, 196, 127, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-time {
+            color: rgba(255,255,255,0.85);
+            font-size: 13px;
+        }
+
+        /* ===== 内容区 ===== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title .icon {
+            font-size: 18px;
+        }
+
+        /* ===== 统计卡片行 ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #38c47f;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .stat-alert .stat-value { color: #f44336; }
+
+        /* ===== 当前传感器 ===== */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .sensor-item {
+            background: #f5f9f9;
+            border-radius: 10px;
+            padding: 12px 6px;
+            text-align: center;
+        }
+
+        .sensor-label {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .sensor-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #38c47f;
+            margin-top: 4px;
+        }
+
+        .sensor-unit {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* ===== 图表容器 ===== */
+        .chart-wrapper {
+            width: 100%;
+            height: 260px;
+            position: relative;
+        }
+
+        .chart-wrapper-sm {
+            height: 220px;
+        }
+
+        /* ===== 病虫害记录表 ===== */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            background: #f5f9f9;
+            color: #666;
+            font-weight: 600;
+            padding: 10px 8px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-high { background: #ffe8e8; color: #f44336; }
+        .status-mid  { background: #fff3e0; color: #ff9800; }
+        .status-low  { background: #e8f5e9; color: #4caf50; }
+        .status-resolved { background: #e3f2fd; color: #2196f3; }
+
+        /* ===== 图表行 (双栏) ===== */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* ===== 时间线 ===== */
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: #e0e0e0;
+        }
+
+        .tl-item {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .tl-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #38c47f;
+            background: #fff;
+        }
+
+        .tl-dot.warning { border-color: #ff9800; }
+        .tl-dot.danger  { border-color: #f44336; }
+
+        .tl-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .tl-content {
+            font-size: 13px;
+            color: #333;
+            margin-top: 2px;
+        }
+
+        /* ===== 风险等级指示器 ===== */
+        .risk-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .risk-track {
+            flex: 1;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .risk-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .risk-text {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .sensor-grid { grid-template-columns: repeat(3, 1fr); }
+            .chart-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 标题栏 ===== -->
+<div class="header">
+    <h1>🌱 数据看板</h1>
+    <span class="header-time" id="headerTime">--</span>
+</div>
+
+<div class="container">
+
+    <!-- ===== 统计卡片 ===== -->
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-value" id="statRecords">128</div>
+            <div class="stat-label">📊 总记录数</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">26.4°C</div>
+            <div class="stat-label">🌡 平均温度</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">67.2%</div>
+            <div class="stat-label">💧 平均湿度</div>
+        </div>
+        <div class="stat-item stat-alert">
+            <div class="stat-value">3</div>
+            <div class="stat-label">🚨 待处理告警</div>
+        </div>
+    </div>
+
+    <!-- ===== 当前传感器数据 ===== -->
+    <div class="card">
+        <div class="card-title"><span class="icon">📡</span> 当前环境数据</div>
+        <div class="sensor-grid">
+            <div class="sensor-item">
+                <div class="sensor-label">温度</div>
+                <div class="sensor-value">28.3</div>
+                <div class="sensor-unit">°C</div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">湿度</div>
+                <div class="sensor-value">72.5</div>
+                <div class="sensor-unit">%RH</div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">光照</div>
+                <div class="sensor-value">18500</div>
+                <div class="sensor-unit">Lux</div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">土壤湿度</div>
+                <div class="sensor-value">55.8</div>
+                <div class="sensor-unit">%RH</div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">CO₂</div>
+                <div class="sensor-value">820</div>
+                <div class="sensor-unit">PPM</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 历史测量折线图 ===== -->
+    <div class="card">
+        <div class="card-title"><span class="icon">📈</span> 历史测量趋势（近7天）</div>
+        <div class="chart-wrapper">
+            <canvas id="lineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- ===== 病虫害统计 & 分布 ===== -->
+    <div class="chart-row">
+        <div class="card">
+            <div class="card-title"><span class="icon">📊</span> 病虫害发生次数</div>
+            <div class="chart-wrapper chart-wrapper-sm">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title"><span class="icon">🎯</span> 病害类型分布</div>
+            <div class="chart-wrapper chart-wrapper-sm">
+                <canvas id="doughnutChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 当前风险评估 ===== -->
+    <div class="card">
+        <div class="card-title"><span class="icon">⚠️</span> 综合风险评估</div>
+        <div class="risk-bar">
+            <span style="font-size:13px;color:#666;width:50px;">低</span>
+            <div class="risk-track">
+                <div class="risk-fill" id="riskFill" style="width:52%;background:linear-gradient(90deg,#4caf50,#ff9800,#f44336);"></div>
+            </div>
+            <span style="font-size:13px;color:#666;width:50px;text-align:right;">高</span>
+            <span class="risk-text" id="riskText" style="color:#ff9800;">中风险 52%</span>
+        </div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">
+            <span class="status-badge status-mid">🌡 温度偏高</span>
+            <span class="status-badge status-low">💧 湿度正常</span>
+            <span class="status-badge status-high">🌧 土壤过湿</span>
+            <span class="status-badge status-mid">☀️ 光照不足</span>
+        </div>
+    </div>
+
+    <!-- ===== 历史病虫害记录 ===== -->
+    <div class="card">
+        <div class="card-title"><span class="icon">🦠</span> 历史病虫害记录</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>病害/虫害</th>
+                        <th>影响区域</th>
+                        <th>严重程度</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="diseaseTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== 最近动态时间线 ===== -->
+    <div class="card">
+        <div class="card-title"><span class="icon">🕐</span> 最近动态</div>
+        <div class="timeline" id="timelineContainer"></div>
+    </div>
+
+    <!-- ===== 环境指标雷达图 ===== -->
+    <div class="card">
+        <div class="card-title"><span class="icon">🕸</span> 环境指标雷达图</div>
+        <div class="chart-wrapper">
+            <canvas id="radarChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ===== 更新时间 =====
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('headerTime').textContent =
+            now.toLocaleString('zh-CN', { hour12: false });
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // ===== 模拟折线数据 =====
+    const labels = ['4/30', '5/1', '5/2', '5/3', '5/4', '5/5', '5/6'];
+
+    const tempData    = [22.1, 24.5, 26.8, 28.3, 27.5, 25.9, 28.3];
+    const humiData    = [65.2, 68.7, 71.3, 74.0, 69.8, 66.5, 72.5];
+    const lightData   = [12000, 15000, 18000, 22000, 16000, 14000, 18500];
+    const soilData    = [48.0, 52.3, 55.1, 58.7, 54.2, 50.8, 55.8];
+    const co2Data     = [720, 780, 850, 900, 810, 760, 820];
+
+    // ===== 1. 折线图 =====
+    new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: '温度 (°C)',     data: tempData,  borderColor: '#38c47f', backgroundColor: 'rgba(56,196,127,0.08)', tension: 0.35, pointRadius: 3, fill: true },
+                { label: '湿度 (%RH)',    data: humiData,  borderColor: '#2196F3', backgroundColor: 'rgba(33,150,243,0.08)', tension: 0.35, pointRadius: 3, fill: true, yAxisID: 'y1' },
+                { label: '土壤湿度 (%RH)', data: soilData,  borderColor: '#9C27B0', backgroundColor: 'rgba(156,39,176,0.08)', tension: 0.35, pointRadius: 3, fill: true },
+                { label: 'CO₂ (PPM)',    data: co2Data,   borderColor: '#F44336', backgroundColor: 'rgba(244,67,54,0.08)', tension: 0.35, pointRadius: 3, fill: true, yAxisID: 'y2' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } }
+            },
+            scales: {
+                y: {
+                    type: 'linear', display: true, position: 'left',
+                    title: { display: true, text: '°C / %RH', font: { size: 10 } },
+                    grid: { color: '#f0f0f0' },
+                    suggestedMin: 10, suggestedMax: 90
+                },
+                y1: {
+                    type: 'linear', display: true, position: 'right',
+                    title: { display: true, text: '%RH', font: { size: 10 } },
+                    grid: { drawOnChartArea: false },
+                    suggestedMin: 40, suggestedMax: 100
+                },
+                y2: {
+                    type: 'linear', display: true, position: 'right',
+                    title: { display: true, text: 'PPM', font: { size: 10 } },
+                    grid: { drawOnChartArea: false },
+                    suggestedMin: 400, suggestedMax: 1200
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    // ===== 2. 光照折线图（单独） =====
+    new Chart(document.getElementById('lineChartLight') || document.createElement('canvas'), {
+        // 光照数据已合并在上方折线图中，此处略
+    });
+
+    // ===== 3. 病虫害柱状图 =====
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels: ['白粉病', '灰霉病', '蚜虫', '红蜘蛛', '霜霉病', '炭疽病'],
+            datasets: [{
+                label: '发生次数',
+                data: [8, 5, 12, 9, 4, 6],
+                backgroundColor: [
+                    'rgba(56,196,127,0.7)', 'rgba(33,150,243,0.7)',
+                    'rgba(255,152,0,0.7)',  'rgba(244,67,54,0.7)',
+                    'rgba(156,39,176,0.7)', 'rgba(233,30,99,0.7)'
+                ],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { stepSize: 3, font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+
+    // ===== 4. 病害类型分布饼图 =====
+    new Chart(document.getElementById('doughnutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['白粉病', '灰霉病', '蚜虫', '红蜘蛛', '霜霉病', '炭疽病'],
+            datasets: [{
+                data: [8, 5, 12, 9, 4, 6],
+                backgroundColor: ['#38c47f','#2196F3','#FF9800','#F44336','#9C27B0','#E91E63'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 8, font: { size: 10 } }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // ===== 5. 雷达图 =====
+    new Chart(document.getElementById('radarChart'), {
+        type: 'radar',
+        data: {
+            labels: ['温度', '湿度', '光照', '土壤湿度', 'CO₂', '通风'],
+            datasets: [
+                {
+                    label: '当前值',
+                    data: [75, 82, 65, 58, 70, 45],
+                    borderColor: '#38c47f',
+                    backgroundColor: 'rgba(56,196,127,0.15)',
+                    pointBackgroundColor: '#38c47f',
+                    pointRadius: 4,
+                    borderWidth: 2
+                },
+                {
+                    label: '适宜范围',
+                    data: [70, 75, 80, 70, 75, 80],
+                    borderColor: 'rgba(33,150,243,0.5)',
+                    backgroundColor: 'rgba(33,150,243,0.06)',
+                    pointBackgroundColor: '#2196F3',
+                    pointRadius: 3,
+                    borderWidth: 1.5,
+                    borderDash: [5,5]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { stepSize: 20, font: { size: 9 }, backdropColor: 'transparent' },
+                    grid: { color: '#e8e8e8' },
+                    angleLines: { color: '#e8e8e8' },
+                    pointLabels: { font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    // ===== 病虫害表格数据 =====
+    const diseaseRecords = [
+        { time: '2026-05-06 09:30', name: '白粉病', area: '3号棚-A区', severity: '高', status: '未处理', statusClass: 'status-high' },
+        { time: '2026-05-05 14:15', name: '蚜虫',   area: '1号棚-C区', severity: '中', status: '处理中', statusClass: 'status-mid' },
+        { time: '2026-05-04 11:00', name: '灰霉病', area: '2号棚-B区', severity: '高', status: '未处理', statusClass: 'status-high' },
+        { time: '2026-05-03 16:45', name: '红蜘蛛', area: '1号棚-A区', severity: '低', status: '已控制', statusClass: 'status-low' },
+        { time: '2026-05-02 08:20', name: '霜霉病', area: '3号棚-B区', severity: '中', status: '处理中', statusClass: 'status-mid' },
+        { time: '2026-05-01 13:10', name: '炭疽病', area: '2号棚-A区', severity: '低', status: '已解决', statusClass: 'status-resolved' },
+        { time: '2026-04-30 10:00', name: '蚜虫',   area: '1号棚-B区', severity: '中', status: '已解决', statusClass: 'status-resolved' },
+        { time: '2026-04-29 15:30', name: '白粉病', area: '2号棚-C区', severity: '低', status: '已控制', statusClass: 'status-low' }
+    ];
+
+    const tbody = document.getElementById('diseaseTableBody');
+    diseaseRecords.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${r.time}</td>
+            <td>🦠 ${r.name}</td>
+            <td>${r.area}</td>
+            <td><span class="status-badge ${r.severity === '高' ? 'status-high' : r.severity === '中' ? 'status-mid' : 'status-low'}">${r.severity}</span></td>
+            <td><span class="status-badge ${r.statusClass}">${r.status}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // ===== 时间线动态 =====
+    const timelineData = [
+        { time: '09:30', text: '3号棚-A区 检测到白粉病，严重程度高', type: 'danger' },
+        { time: '07:15', text: '温度上升至 28.3°C，光照强度达 18500Lux', type: '' },
+        { time: '昨日 22:00', text: '自动灌溉系统启动，土壤湿度从 48% 升至 55%', type: '' },
+        { time: '昨日 16:45', text: '1号棚-A区 红蜘蛛已控制，风险降为低', type: 'warning' },
+        { time: '昨日 14:00', text: 'CO₂浓度稳定在 820PPM，光合作用条件良好', type: '' },
+        { time: '昨日 11:00', text: '2号棚-B区 检测到灰霉病，启动通风除湿', type: 'danger' },
+        { time: '昨日 08:20', text: '3号棚-B区 霜霉病开始药物喷洒处理', type: 'warning' }
+    ];
+
+    const tlContainer = document.getElementById('timelineContainer');
+    timelineData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'tl-item';
+        div.innerHTML = `
+            <div class="tl-dot ${item.type}"></div>
+            <div class="tl-time">${item.time}</div>
+            <div class="tl-content">${item.text}</div>
+        `;
+        tlContainer.appendChild(div);
+    });
+
+    // ===== 风险等级动态变化 =====
+    let riskLevel = 52;
+    setInterval(() => {
+        riskLevel = Math.max(10, Math.min(95, riskLevel + (Math.random() - 0.5) * 10));
+        document.getElementById('riskFill').style.width = riskLevel + '%';
+        const text = document.getElementById('riskText');
+        if (riskLevel < 30) {
+            text.style.color = '#4caf50';
+            text.textContent = `低风险 ${Math.round(riskLevel)}%`;
+        } else if (riskLevel < 60) {
+            text.style.color = '#ff9800';
+            text.textContent = `中风险 ${Math.round(riskLevel)}%`;
+        } else {
+            text.style.color = '#f44336';
+            text.textContent = `高风险 ${Math.round(riskLevel)}%`;
+        }
+    }, 3000);
+</script>
+
+</body>
+</html>

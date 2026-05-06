@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#f5f9f9">
+
+    <!-- 标题栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@drawable/header_gradient"
+        android:elevation="8dp">
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="12dp"
+            android:padding="10dp"
+            android:src="@mipmap/jian"
+            android:background="@drawable/button_ripple"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/analysis_title"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:textColor="#fff"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"/>
+
+        <Button
+            android:id="@+id/btn_analyze"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="12dp"
+            android:text="@string/start_analysis"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:background="@drawable/button_ripple"
+            android:textColor="#fff"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="15dp">
+
+            <!-- 当前环境数据卡片 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/current_data"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:layout_marginTop="15dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:background="#f5f9f9"
+                        android:layout_margin="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Temperature"
+                            android:textSize="12sp"
+                            android:textColor="#666"/>
+
+                        <TextView
+                            android:id="@+id/analysis_temp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--°C"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#38c47f"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:background="#f5f9f9"
+                        android:layout_margin="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Humidity"
+                            android:textSize="12sp"
+                            android:textColor="#666"/>
+
+                        <TextView
+                            android:id="@+id/analysis_humi"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--%RH"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#38c47f"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:background="#f5f9f9"
+                        android:layout_margin="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Light"
+                            android:textSize="12sp"
+                            android:textColor="#666"/>
+
+                        <TextView
+                            android:id="@+id/analysis_light"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--Lux"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#38c47f"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:background="#f5f9f9"
+                        android:layout_margin="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Soil Moisture"
+                            android:textSize="12sp"
+                            android:textColor="#666"/>
+
+                        <TextView
+                            android:id="@+id/analysis_soil"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--%RH"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#38c47f"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:background="#f5f9f9"
+                        android:layout_margin="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CO₂ Level"
+                            android:textSize="12sp"
+                            android:textColor="#666"/>
+
+                        <TextView
+                            android:id="@+id/analysis_co2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--PPM"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#38c47f"/>
+                    </LinearLayout>
+
+                </GridLayout>
+            </LinearLayout>
+
+            <!-- 分析结果卡片 -->
+            <LinearLayout
+                android:id="@+id/card_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="4dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ai_result"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <!-- 风险评估 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp"
+                    android:padding="10dp"
+                    android:background="#f5f9f9">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/risk_assessment"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/risk_level"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Low Risk"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#38c47f"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+                <!-- 环境评估 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/env_assessment"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/env_assessment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Waiting for analysis..."
+                        android:textSize="13sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="5dp"/>
+                </LinearLayout>
+
+                <!-- 建议措施 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="15dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/suggestions"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000"/>
+
+                    <TextView
+                        android:id="@+id/suggestions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="13sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="5dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 数据趋势图 -->
+            <LinearLayout
+                android:id="@+id/card_charts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="4dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/data_trend"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp">
+
+                    <LinearLayout
+                        android:id="@+id/layout_charts_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"/>
+                </ScrollView>
+            </LinearLayout>
+
+            <!-- 常见病虫害知识库 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#fff"
+                android:padding="15dp"
+                android:elevation="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/knowledge_base"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔸 Powdery Mildew"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#333"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Conditions: Temp 15-25°C, Humidity >70%\nControl: Increase ventilation, reduce humidity, spray fungicide"
+                        android:textSize="12sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#eee"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔸 Aphids"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#333"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Conditions: Temp 20-25°C, Dry environment\nControl: Yellow sticky traps, spray insecticide, introduce predators"
+                        android:textSize="12sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#eee"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔸 Gray Mold"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#333"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Conditions: Temp 18-23°C, Humidity >85%\nControl: Control humidity, remove diseased leaves, chemical treatment"
+                        android:textSize="12sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#eee"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔸 Spider Mites"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#333"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Conditions: Temp 25-30°C, Dry environment\nControl: Increase humidity, spray acaricide, biological control"
+                        android:textSize="12sp"
+                        android:textColor="#666"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

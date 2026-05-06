@@ -1,0 +1,73 @@
+<resources>
+    <string name="app_name">Smart Greenhouse</string>
+    
+    <!-- Main Activity -->
+    <string name="main_title">Smart Greenhouse</string>
+    <string name="history">History</string>
+    <string name="analysis">Analysis</string>
+    <string name="image_recognition">AI Recognition</string>
+    
+    <!-- Sensor Names -->
+    <string name="temperature">Temperature</string>
+    <string name="humidity">Humidity</string>
+    <string name="light">Light Intensity</string>
+    <string name="soil_humidity">Soil Moisture</string>
+    <string name="co2">CO₂ Concentration</string>
+    
+    <!-- Control -->
+    <string name="manual_mode">Manual Mode</string>
+    <string name="threshold_setting">Threshold Settings</string>
+    <string name="fan">Fans</string>
+    <string name="humidifier">Humidifiers</string>
+    <string name="water_pump">Water Pumps</string>
+    <string name="alarm">Alarms</string>
+    <string name="light_device">Grow Lights</string>
+    <string name="temperature_threshold">Temperature Threshold</string>
+    <string name="humidity_threshold">Humidity Threshold</string>
+    <string name="light_threshold">Light Threshold</string>
+    <string name="soil_threshold">Soil Threshold</string>
+    
+    <!-- History Activity -->
+    <string name="history_title">History Records</string>
+    <string name="clear">Clear</string>
+    <string name="data_statistics">Data Statistics</string>
+    <string name="total_records">Total Records</string>
+    <string name="avg_temp">Avg Temperature</string>
+    <string name="avg_humi">Avg Humidity</string>
+    <string name="recent_records">Recent Records</string>
+    
+    <!-- Analysis Activity -->
+    <string name="analysis_title">Pest &amp; Disease Analysis</string>
+    <string name="start_analysis">Start Analysis</string>
+    <string name="current_data">Current Environment Data</string>
+    <string name="ai_result">AI Analysis Result</string>
+    <string name="risk_assessment">Pest &amp; Disease Risk Assessment</string>
+    <string name="env_assessment">Environment Assessment</string>
+    <string name="suggestions">Recommendations</string>
+    <string name="data_trend">Historical Data Trends</string>
+    <string name="knowledge_base">Common Pest &amp; Disease Knowledge</string>
+    
+    <!-- Image Recognition Activity -->
+    <string name="recognition_title">AI Pest Recognition</string>
+    <string name="upload_photo">Upload Plant Photo</string>
+    <string name="upload_hint_text">Take or select photos of diseased leaves, fruits, etc.</string>
+    <string name="click_upload">Click to Upload Photo</string>
+    <string name="select_photo">Select Photo</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="start_recognition">Start Recognition</string>
+    <string name="analyzing">AI is analyzing...</string>
+    <string name="recognizing_features">Identifying pest &amp; disease features</string>
+    <string name="recognition_report">Recognition Analysis Report</string>
+    <string name="recognition_result">Recognition Result</string>
+    <string name="confidence">Confidence</string>
+    <string name="disease_features">Disease Features</string>
+    <string name="cause">Causes</string>
+    <string name="comprehensive_suggestions">Comprehensive Recommendations</string>
+    <string name="prevention">Prevention Measures</string>
+    <string name="usage_tips">Usage Tips</string>
+    <string name="tips_content">• Take clear photos of affected areas
+• Include both leaf front and back
+• Ensure good lighting, avoid over/under exposure
+• Multiple photos improve accuracy
+• Results are for reference only</string>
+</resources>
