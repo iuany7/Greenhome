@@ -47,7 +47,11 @@ public class MainActivity extends AppCompatActivity {
     TextView TempVal,HumiVal,LightVal,SoilVal,CO2Val,TempThreshold,SoilThreshold,HumiThreshold,LightThreshold,CO2Threshold,Switch1Name,Switch2Name,Switch3Name,Switch4Name,Switch5Name;
     Switch Mode,Threshold,Switch1,Switch2,Switch3,Switch4,Switch5;
     ImageView TempThresholdDown,TempThresholdAdd,SoilThresholdDown,SoilThresholdAdd,HumiThresholdDown,HumiThresholdAdd,LightThresholdDown,LightThresholdAdd,CO2ThresholdDown,CO2ThresholdAdd;
-    ImageView btnHistory, btnAnalysis, btnImageRecognition, btnAIChat, btnDashboard;
+    View btnHistory, btnAnalysis, btnImageRecognition, btnAIChat, btnDashboard;
+    private MqttConnectOptions connectionOptions;
+    private boolean updatingControls;
+    private volatile boolean destroyed;
+    private TextView connectionStatus, lastUpdated;
 
 
     int math = (int) ((Math.random() * 9 + 1) * (10000));
@@ -65,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private AlertDialog loginDialog;
 
-    Message msg = new Message();
     //
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,8 +106,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnDashboard.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
-            startActivity(intent);
+            Toast.makeText(this, "数据看板尚未配置，可先查看环境分析与历史记录", Toast.LENGTH_LONG).show();
         });
 
 
@@ -147,8 +149,8 @@ public class MainActivity extends AppCompatActivity {
                     etUsername.setError("不能为空");
                     hasError = true;
                 }
-                if (password.isEmpty()) {
-                    etPassword.setError("不能为空");
+                if (password.isEmpty() || password.contains("#") || password.contains("+") || password.indexOf(0) >= 0) {
+                    etPassword.setError("请输入不含通配符的发布主题");
                     hasError = true;
                 }
 
@@ -183,12 +185,10 @@ public class MainActivity extends AppCompatActivity {
     private void initializeAfterLogin() {
         // 这里放置需要在登录后执行的代码
         // 例如：跳转到主界面、加载网络数据等
-        Mqtt_init();
-        startReconnect();
-        Listen_for_events();
-        handler = new Handler(Looper.myLooper()) {
+        handler = new Handler(Looper.getMainLooper()) {
             @SuppressLint("SetTextI18n")
             public void handleMessage(Message msg) {
+                if (destroyed) return;
                 super.handleMessage(msg);
                 switch (msg.what){
                     case 1: //开机校验更新回传
@@ -206,24 +206,19 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case 30:  //连接失败
                         //parseJsonobj(mqtt_sub_topic);
-                        Toast.makeText(MainActivity.this,"MQTT服务器连接失败" ,Toast.LENGTH_SHORT).show();
+                        setConnectionState(false, "连接已断开 · 正在自动重试");
                         break;
                     case 31:   //连接成功
-                        Toast.makeText(MainActivity.this,"MQTT服务器连接成功,等待硬件数据上报" ,Toast.LENGTH_SHORT).show();
-                        try {
-                            //parseJsonobj(mqtt_sub_topic);
-                            client.subscribe(mqtt_sub_topic,0);
-                            //client.publish(mqtt_pub_topic,1);
-                        } catch (MqttException e) {
-
-                            e.printStackTrace();
-                        }
+                        setConnectionState(true, "已连接 · 等待设备数据");
                         break;
                     default:
                         break;
                 }
             }
         };
+        Listen_for_events();
+        Mqtt_init();
+        startReconnect();
 
     }
     private void Mqtt_init()
@@ -237,8 +232,9 @@ public class MainActivity extends AppCompatActivity {
             //MQTT的连接设置
 
             MqttConnectOptions options = new MqttConnectOptions();
+            connectionOptions = options;
             //设置是否清空session,这里如果设置为false表示服务器会保留客户端的连接记录，这里设置为true表示每次连接到服务器都以新的身份连接
-            options.setCleanSession(false);
+            options.setCleanSession(true);
             //设置连接的用户名
             options.setUserName(userName);
             //设置连接的密码
@@ -257,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                     //连接丢失后，一般在这里面进行重连
                     System.out.println("connectionLost----------");
 
-                    //startReconnect();
+                    if (!destroyed) handler.sendEmptyMessage(30);
                 }
                 @Override
 
@@ -283,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                     msg.what = 3;   //收到消息标志位
 //                    msg.obj = topicName + "---" +message.toString();
                     msg.obj = message.toString();
-                    handler.sendMessage(msg);    // hander 回传
+                    if (!destroyed) handler.sendMessage(msg);    // hander 回传
 
                 }
             });
@@ -292,59 +288,83 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // MQTT连接函数
+    // Serialize connection attempts and commands away from the UI thread.
     private void Mqtt_connect() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if(!(client.isConnected()) )  //如果还未连接
-                    {
-                        MqttConnectOptions options = null;
-                        client.connect(options);
-                        Message msg = new Message();
-                        msg.what = 31;
-                        handler.sendMessage(msg);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-
-                    handler.sendMessage(msg);
-                }
-            }
-        }).start();
+        if (destroyed || client == null || client.isConnected()) return;
+        try {
+            client.connect(connectionOptions);
+            client.subscribe(mqtt_sub_topic, 0);
+            if (!destroyed) handler.sendEmptyMessage(31);
+        } catch (Exception e) {
+            try { if (client.isConnected()) client.disconnect(); } catch (MqttException ignored) { }
+            if (!destroyed) handler.sendEmptyMessage(30);
+        }
     }
 
-    // MQTT重新连接函数
     private void startReconnect() {
-
         scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                if (!client.isConnected()) {
-                    Mqtt_connect();
-                }
-            }
-        }, 0*1000, 10 * 1000, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(this::Mqtt_connect, 0, 10, TimeUnit.SECONDS);
     }
 
-    // 订阅函数    (下发任务/命令)
-    private void publishmessageplus(String topic,String message2)
-    {
-        if (client == null || !client.isConnected()) {
+    private void setConnectionState(boolean connected, String status) {
+        connectionStatus.setText(status);
+        connectionStatus.setTextColor(Color.parseColor(connected ? "#16734B" : "#9A5418"));
+        for (View control : new View[]{Mode, Threshold, Switch1, Switch2, Switch3, Switch4, Switch5,
+                TempThresholdAdd, TempThresholdDown, HumiThresholdAdd, HumiThresholdDown,
+                LightThresholdAdd, LightThresholdDown, SoilThresholdAdd, SoilThresholdDown,
+                CO2ThresholdAdd, CO2ThresholdDown}) {
+            control.setEnabled(connected);
+            control.setAlpha(connected ? 1f : 0.4f);
+        }
+    }
+
+    private void publishmessageplus(String topic, String command) {
+        if (updatingControls || destroyed) return;
+        if (client == null || !client.isConnected() || scheduler == null) {
+            setConnectionState(false, "连接已断开 · 正在自动重试");
+            Toast.makeText(this, "设备离线，指令未发送", Toast.LENGTH_SHORT).show();
             return;
         }
-        MqttMessage message = new MqttMessage();
-        message.setPayload(message2.getBytes());
-        try {
-            client.publish(topic,message2.getBytes(),0,false);
-            // client.publish(topic,message);
-        } catch (MqttException e) {
-
-            e.printStackTrace();
-        }
+        scheduler.execute(() -> {
+            try {
+                client.publish(topic, command.getBytes(java.nio.charset.StandardCharsets.UTF_8), 0, false);
+                handler.post(() -> {
+                    if (!destroyed) Toast.makeText(this, "指令已发送，请以设备上报状态为准", Toast.LENGTH_SHORT).show();
+                });
+            } catch (MqttException | IllegalArgumentException e) {
+                handler.post(() -> {
+                    if (!destroyed) {
+                        setConnectionState(client.isConnected(), "指令发送失败，请重试");
+                        Toast.makeText(this, "指令发送失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
     }
+
+    @Override
+    protected void onDestroy() {
+        destroyed = true;
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+        if (handler != null) handler.removeCallbacksAndMessages(null);
+        if (myVibrator != null) myVibrator.cancel();
+        if (loginDialog != null && loginDialog.isShowing()) loginDialog.dismiss();
+        final MqttClient closingClient = client;
+        if (closingClient != null) new Thread(() -> {
+            try {
+                if (scheduler != null) scheduler.awaitTermination(12, TimeUnit.SECONDS);
+                closingClient.disconnectForcibly(0, 1000);
+                closingClient.close();
+            } catch (MqttException ignored) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }, "mqtt-cleanup").start();
+        super.onDestroy();
+    }
+
     private void parseJsonobj(String jsonobj){
         // 解析json
 
@@ -367,6 +387,29 @@ public class MainActivity extends AppCompatActivity {
             String sensor14 = jsonObject.getString("sensor14");
             String sensor15 = jsonObject.getString("sensor15");
             
+            // Validate the complete frame before changing UI or saving history.
+            for (int i = 1; i <= 10; i++) {
+                double value = Double.parseDouble(jsonObject.getString("sensor" + i));
+                if (Double.isNaN(value) || Double.isInfinite(value)) throw new NumberFormatException();
+            }
+            for (int i = 11; i <= 15; i++) {
+                String state = jsonObject.getString("sensor" + i);
+                if (!state.equals("0") && !state.equals("1")) throw new NumberFormatException();
+            }
+            updatingControls = true;
+            Switch1.setChecked(sensor11.equals("1"));
+            Switch1Name.setText("风机 · " + (sensor11.equals("1") ? "运行中" : "已关闭"));
+            Switch2.setChecked(sensor12.equals("1"));
+            Switch2Name.setText("加湿器 · " + (sensor12.equals("1") ? "运行中" : "已关闭"));
+            Switch3.setChecked(sensor13.equals("1"));
+            Switch3Name.setText("水泵 · " + (sensor13.equals("1") ? "运行中" : "已关闭"));
+            Switch4.setChecked(sensor14.equals("1"));
+            Switch4Name.setText("报警器 · " + (sensor14.equals("1") ? "运行中" : "已关闭"));
+            Switch5.setChecked(sensor15.equals("1"));
+            Switch5Name.setText("补光灯 · " + (sensor15.equals("1") ? "运行中" : "已关闭"));
+            updatingControls = false;
+            connectionStatus.setText("已连接 · 数据已更新");
+            lastUpdated.setText("最近更新 " + new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date()));
             // 更新UI显示
             TempVal.setText(sensor1+"°C");
             HumiVal.setText(sensor2+"%RH");
@@ -389,48 +432,48 @@ public class MainActivity extends AppCompatActivity {
 
             if (Integer.parseInt(sensor11)==1){
 
-                Switch1Name.setTextColor(Color.GREEN);
+                Switch1Name.setTextColor(Color.parseColor("#16734B"));
             }else {
 
-                Switch1Name.setTextColor(Color.RED);
+                Switch1Name.setTextColor(Color.parseColor("#607568"));
             }
 
             if (Integer.parseInt(sensor12)==1){
 
-                Switch2Name.setTextColor(Color.GREEN);
+                Switch2Name.setTextColor(Color.parseColor("#16734B"));
             }else {
 
-                Switch2Name.setTextColor(Color.RED);
+                Switch2Name.setTextColor(Color.parseColor("#607568"));
             }
 
             if (Integer.parseInt(sensor13)==1){
 
-                Switch3Name.setTextColor(Color.GREEN);
+                Switch3Name.setTextColor(Color.parseColor("#16734B"));
             }else {
 
-                Switch3Name.setTextColor(Color.RED);
+                Switch3Name.setTextColor(Color.parseColor("#607568"));
             }
 
             if (Integer.parseInt(sensor14)==1){
 
-                Switch4Name.setTextColor(Color.GREEN);
+                Switch4Name.setTextColor(Color.parseColor("#16734B"));
                 myVibrator.cancel();
                 myVibrator.vibrate(new long[]{100, 100, 100, 1000}, 0);
             }else {
                 myVibrator.cancel();
-                Switch4Name.setTextColor(Color.RED);
+                Switch4Name.setTextColor(Color.parseColor("#607568"));
             }
 
             if (Integer.parseInt(sensor15)==1){
-                Switch5Name.setTextColor(Color.GREEN);
+                Switch5Name.setTextColor(Color.parseColor("#16734B"));
             }else {
-                Switch5Name.setTextColor(Color.RED);
+                Switch5Name.setTextColor(Color.parseColor("#607568"));
             }
             //
 
-        } catch (JSONException e) {
-
-            e.printStackTrace();
+        } catch (JSONException | NumberFormatException e) {
+            updatingControls = false;
+            connectionStatus.setText("收到无效数据 · 保留上次读数");
         }
     }
 
@@ -443,12 +486,15 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("light", light);
         editor.putString("soil", soil);
         editor.putString("co2", co2);
+        editor.putLong("updated_at", System.currentTimeMillis());
         editor.apply();
     }
 
 
     //给控件获取id
     private void Control_initialization(){
+        connectionStatus = findViewById(R.id.connection_status);
+        lastUpdated = findViewById(R.id.last_updated);
         myVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
         TempVal=findViewById(R.id.TempVal);
         HumiVal=findViewById(R.id.HumiVal);
@@ -500,7 +546,7 @@ public class MainActivity extends AppCompatActivity {
         Switch3.setVisibility(View.INVISIBLE);
         Switch4.setVisibility(View.INVISIBLE);
         Switch5.setVisibility(View.INVISIBLE);
-
+        setConnectionState(false, "未连接 · 请配置通信主题");
 
     }
     //监听事件
@@ -509,17 +555,20 @@ public class MainActivity extends AppCompatActivity {
       Mode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
           @Override
           public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
               if (isChecked){
                   Switch1.setVisibility(View.VISIBLE);
                   Switch2.setVisibility(View.VISIBLE);
                   Switch3.setVisibility(View.VISIBLE);
                   Switch4.setVisibility(View.VISIBLE);
                   Switch5.setVisibility(View.VISIBLE);
-                  Switch1.setChecked(false);
-                  Switch2.setChecked(false);
-                  Switch3.setChecked(false);
-                  Switch4.setChecked(false);
-                  Switch5.setChecked(false);
                   publishmessageplus(mqtt_pub_topic,"Manual");
               }else {
                   Switch1.setVisibility(View.INVISIBLE);
@@ -535,6 +584,17 @@ public class MainActivity extends AppCompatActivity {
         Switch1.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
           @Override
           public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
+              updatingControls = true;
+              buttonView.setChecked(!isChecked);
+              updatingControls = false;
               if (isChecked){
                   publishmessageplus(mqtt_pub_topic,"Switch1ON");
               }else {
@@ -546,6 +606,17 @@ public class MainActivity extends AppCompatActivity {
         Switch2.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
+                updatingControls = true;
+                buttonView.setChecked(!isChecked);
+                updatingControls = false;
                 if (isChecked){
                     publishmessageplus(mqtt_pub_topic,"Switch2ON");
                 }else {
@@ -557,6 +628,17 @@ public class MainActivity extends AppCompatActivity {
         Switch3.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
+                updatingControls = true;
+                buttonView.setChecked(!isChecked);
+                updatingControls = false;
                 if (isChecked){
                     publishmessageplus(mqtt_pub_topic,"Switch3ON");
                 }else {
@@ -568,6 +650,17 @@ public class MainActivity extends AppCompatActivity {
         Switch4.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
+                updatingControls = true;
+                buttonView.setChecked(!isChecked);
+                updatingControls = false;
                 if (isChecked){
                     publishmessageplus(mqtt_pub_topic,"Switch4ON");
                 }else {
@@ -580,6 +673,17 @@ public class MainActivity extends AppCompatActivity {
         Switch5.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
+                updatingControls = true;
+                buttonView.setChecked(!isChecked);
+                updatingControls = false;
                 if (isChecked){
                     publishmessageplus(mqtt_pub_topic,"Switch5ON");
                 }else {
@@ -592,6 +696,14 @@ public class MainActivity extends AppCompatActivity {
         Threshold.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (updatingControls) return;
+                if (client == null || !client.isConnected()) {
+                    updatingControls = true;
+                    buttonView.setChecked(!isChecked);
+                    updatingControls = false;
+                    setConnectionState(false, "设备离线 · 操作未发送");
+                    return;
+                }
                 if (isChecked){
                     publishmessageplus(mqtt_pub_topic,"ThresholdON");
                 }else {
